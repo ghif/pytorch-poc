@@ -56,10 +56,7 @@ def fit(model, train_dataloader, test_dataloader, loss_fn, optimizer, n_epochs=1
         train(train_dataloader, model, loss_fn, optimizer)
         end_time = timer()
 
-        if checkpoint_path is not None:
-            # Save model
-            torch.save(model.state_dict(), checkpoint_path)
-            print(f"Saved PyTorch Model State to {checkpoint_path}")
+        
 
         # Evaluate training and testing performance
         train_loss, train_acc = test(train_dataloader, model, loss_fn) # Training performance
@@ -85,6 +82,14 @@ def fit(model, train_dataloader, test_dataloader, loss_fn, optimizer, n_epochs=1
                 },
                 t,
             )
+        # end if writer
+            
+        if checkpoint_path is not None:
+            # Save model
+            torch.save(model.state_dict(), checkpoint_path)
+            print(f"Saved PyTorch Model State to {checkpoint_path}")
+        # end if checkpont
+            
     # end for
 
     if writer is not None:        
