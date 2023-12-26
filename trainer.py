@@ -1,5 +1,6 @@
 from tqdm import tqdm
 import torch
+from timeit import default_timer as timer
 
 device = (
     "cuda"
@@ -44,3 +45,48 @@ def test(dataloader, model, loss_fn):
     print(f"Test Performance: \n Accuracy: {(100*accuracy):.2f}%, Avg loss: {loss:.4f} \n")
 
     return loss, accuracy
+
+
+def fit(model, train_dataloader, test_dataloader, loss_fn, optimizer, n_epochs=10, checkpoint_path=None, writer=None):
+    for t in range(n_epochs):
+        print(f"Epoch {t+1}\n-------------------------------")
+
+        # Train!
+        start_time = timer()
+        train(train_dataloader, model, loss_fn, optimizer)
+        end_time = timer()
+
+        if checkpoint_path is not None:
+            # Save model
+            torch.save(model.state_dict(), checkpoint_path)
+            print(f"Saved PyTorch Model State to {checkpoint_path}")
+
+        # Evaluate training and testing performance
+        train_loss, train_acc = test(train_dataloader, model, loss_fn) # Training performance
+        test_loss, test_acc = test(test_dataloader, model, loss_fn) # Testing performance
+
+        print(f"Elapsed time: {end_time - start_time:.2f} seconds\n")
+
+        if writer is not None:
+            # Write loss and accuracy to tensorboard
+            writer.add_scalars(
+                "Loss",
+                {
+                    "train": train_loss,
+                    "test": test_loss,
+                },
+                t,
+            )
+            writer.add_scalars(
+                "Accuracy",
+                {
+                    "train": train_acc,
+                    "test": test_acc,
+                },
+                t,
+            )
+    # end for
+
+    if writer is not None:        
+        writer.flush()
+        writer.close() 
