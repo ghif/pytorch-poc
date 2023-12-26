@@ -43,7 +43,7 @@ class ResidualBlock(nn.Module):
             bias=False
         )
         self.bn1 = nn.BatchNorm2d(out_channels)
-        self.relu = nn.ReLU(inplace=True)
+        self.relu = nn.ReLU()
         self.conv2 = nn.Conv2d(
             out_channels, 
             out_channels*self.expansion, 
@@ -132,6 +132,49 @@ class TinyResnet(nn.Module):
             img_channel,
             in_channels,
             kernel_size=7,
+            stride=2,
+            padding=3,
+            bias=False
+        )
+
+        self.bn1 = nn.BatchNorm2d(in_channels)
+        self.relu = nn.ReLU()
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+
+        self.layer1 = make_residual_layer(block, in_channels, 64, 2, expansion=expansion)
+
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc = nn.Linear(64 * expansion, num_classes)
+    
+    def forward(self, x: Tensor) -> Tensor:
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        x = self.maxpool(x)
+        
+        x = self.layer1(x)
+
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        logits = self.fc(x)
+
+        return logits
+
+class TinyResnetV2(nn.Module):
+    def __init__(
+        self,
+        img_channel: int,
+        block: Type[ResidualBlock],
+        num_classes: int = 10
+    ) -> None:
+        super().__init__()
+        expansion = 1
+        in_channels = 64
+
+        self.conv1 = nn.Conv2d(
+            img_channel,
+            in_channels,
+            kernel_size=3,
             stride=2,
             padding=3,
             bias=False
