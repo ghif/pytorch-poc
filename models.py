@@ -20,6 +20,26 @@ class NeuralNetwork(nn.Module):
         logits = self.linear_relu_stack(x)
         return logits
 
+class ConvNet(nn.Module):
+    def __init__(self, ch, dx1, dx2, num_classes):
+        super(ConvNet, self).__init__()
+        
+        self.convnet = nn.Sequential(
+            nn.Conv2d(ch, 32, kernel_size=3, padding=1),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(32, 64, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Flatten(),
+            nn.Linear(64 * (dx1 // 4) * (dx2 // 4), 128),
+            nn.ReLU(),
+            nn.Linear(128, num_classes),
+        )
+
+    def forward(self, x):
+        logits = self.convnet(x)
+        return logits
+    
 class ResidualBlock(nn.Module):
     def __init__(
         self, 
