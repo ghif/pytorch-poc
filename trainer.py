@@ -42,7 +42,7 @@ def test(dataloader, model, loss_fn):
             accuracy += (pred.argmax(1) == y).type(torch.float).sum().item()
     loss /= num_batches
     accuracy /= size
-    print(f"Test Performance: \n Accuracy: {(100*accuracy):.2f}%, Avg loss: {loss:.4f} \n")
+    print(f"- Accuracy: {(100*accuracy):.2f}%, Avg loss: {loss:.4f} \n")
 
     return loss, accuracy
 
@@ -56,10 +56,10 @@ def fit(model, train_dataloader, test_dataloader, loss_fn, optimizer, n_epochs=1
         train(train_dataloader, model, loss_fn, optimizer)
         end_time = timer()
 
-        
-
         # Evaluate training and testing performance
+        print(f"Training performance:")
         train_loss, train_acc = test(train_dataloader, model, loss_fn) # Training performance
+        print(f"Test performance:")
         test_loss, test_acc = test(test_dataloader, model, loss_fn) # Testing performance
 
         print(f"Elapsed time: {end_time - start_time:.2f} seconds\n")
