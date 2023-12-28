@@ -3,17 +3,55 @@ from torch import nn
 from torch import Tensor
 from typing import Type
 
+class MLP(nn.Module):
+    def __init__(self, ch, dx1, dx2, d_hid, num_classes):
+        super(MLP, self).__init__()
+        self.flatten = nn.Flatten()
+        
+        self.linear_relu_stack = nn.Sequential(
+            nn.Linear(ch * dx1 * dx2, d_hid),
+            nn.BatchNorm1d(d_hid),
+            nn.ReLU(),
+
+            nn.Linear(d_hid, d_hid),
+            nn.BatchNorm1d(d_hid),
+            nn.ReLU(),
+
+            nn.Linear(d_hid, d_hid),
+            nn.BatchNorm1d(d_hid),
+            nn.ReLU(),
+
+            nn.Linear(d_hid, num_classes)
+        )
+    
+    def forward(self, x):
+        x = self.flatten(x)
+        logits = self.linear_relu_stack(x)
+        return logits
+    
 class NeuralNetwork(nn.Module):
-    def __init__(self, ch, dx1, dx2, num_classes):
+    def __init__(self, ch, dx1, dx2, num_classes, with_bn=False):
         super(NeuralNetwork, self).__init__()
         self.flatten = nn.Flatten()
-        self.linear_relu_stack = nn.Sequential(
-            nn.Linear(ch * dx1 * dx2, 512),
-            nn.ReLU(),
-            nn.Linear(512, 512),
-            nn.ReLU(),
-            nn.Linear(512, num_classes)
-        )
+
+        if with_bn:
+            self.linear_relu_stack = nn.Sequential(
+                nn.Linear(ch * dx1 * dx2, 512),
+                nn.BatchNorm1d(512),
+                nn.ReLU(),
+                nn.Linear(512, 512),
+                nn.BatchNorm1d(512),
+                nn.ReLU(),
+                nn.Linear(512, num_classes)
+            )
+        else:
+            self.linear_relu_stack = nn.Sequential(
+                nn.Linear(ch * dx1 * dx2, 512),
+                nn.ReLU(),
+                nn.Linear(512, 512),
+                nn.ReLU(),
+                nn.Linear(512, num_classes)
+            )
 
     def forward(self, x):
         x = self.flatten(x)
