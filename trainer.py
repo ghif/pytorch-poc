@@ -1,20 +1,23 @@
+import os
+import json
+
 from tqdm import tqdm
 import torch
 from timeit import default_timer as timer
+from time import process_time
 
-device = (
-    "cuda"
-    if torch.cuda.is_available()
-    # else "mps"
-    # if torch.backends.mps.is_available()
-    else "cpu"
-)
-def train(dataloader, model, loss_fn, optimizer):
+def train(dataloader, model, loss_fn, optimizer, device=None):
+    if device is None:
+        device = "cpu"
+
+    model = model.to(device)
     model.train() # set model to training mode
+
+    train_time = 0.
     with tqdm(dataloader, unit="batch") as tepoch:
         for (X, y) in tepoch:
+            start_t = process_time()
             X, y = X.to(device), y.to(device)
-            
             # Compute prediction error
             pred = model(X)
             loss = loss_fn(pred, y)
@@ -24,15 +27,27 @@ def train(dataloader, model, loss_fn, optimizer):
             loss.backward()
             optimizer.step()
 
-            tepoch.set_postfix(loss=loss.item())
-            # if batch % 100 == 0:
-            #     loss, current = loss.item(), batch * len(X)
-            #     # print(f"loss: {loss:>7f} [{current:>5d}/{size:>5d}]")
+            elapsed_time = process_time() - start_t
+            train_time += elapsed_time
 
-def test(dataloader, model, loss_fn):
+            tepoch.set_postfix({
+                'loss': loss.item(),
+                'time(secs)': train_time
+            })
+        # end for
+    
+    return train_time
+
+def test(dataloader, model, loss_fn, device=None):
+    if device is None:
+        device = "cpu"
+
     size = len(dataloader.dataset)
     num_batches = len(dataloader)
+
+    model = model.to(device)
     model.eval() # set model to evaluation mode
+    
     loss, accuracy = 0, 0
     with torch.no_grad():
         for X, y in dataloader:
@@ -47,22 +62,44 @@ def test(dataloader, model, loss_fn):
     return loss, accuracy
 
 
-def fit(model, train_dataloader, test_dataloader, loss_fn, optimizer, n_epochs=10, checkpoint_path=None, writer=None):
+def fit(model, 
+        train_dataloader, 
+        test_dataloader, 
+        loss_fn, 
+        optimizer, 
+        n_epochs=10, 
+        checkpoint_dir=None, 
+        model_name=None,
+        writer=None, 
+        device=None
+    ):
+    history = {
+        "train_losses": [],
+        "test_losses": [],
+        "train_accs": [],
+        "test_accs": [],
+        "train_times": []
+    }
+    
     for t in range(n_epochs):
         print(f"Epoch {t+1}\n-------------------------------")
 
         # Train!
-        start_time = timer()
-        train(train_dataloader, model, loss_fn, optimizer)
-        end_time = timer()
+        train_time = train(train_dataloader, model, loss_fn, optimizer, device=device)
 
         # Evaluate training and testing performance
         print(f"Training performance:")
-        train_loss, train_acc = test(train_dataloader, model, loss_fn) # Training performance
+        train_loss, train_acc = test(train_dataloader, model, loss_fn, device=device) # Training performance
         print(f"Test performance:")
-        test_loss, test_acc = test(test_dataloader, model, loss_fn) # Testing performance
+        test_loss, test_acc = test(test_dataloader, model, loss_fn, device=device) # Testing performance
 
-        print(f"Elapsed time: {end_time - start_time:.2f} seconds\n")
+        print(f"Elapsed time: {train_time:.2f} seconds\n")
+
+        history["train_losses"].append(train_loss)
+        history["test_losses"].append(test_loss)
+        history["train_accs"].append(train_acc)
+        history["test_accs"].append(test_acc)
+        history["train_times"].append(train_time)
 
         if writer is not None:
             # Write loss and accuracy to tensorboard
@@ -84,11 +121,24 @@ def fit(model, train_dataloader, test_dataloader, loss_fn, optimizer, n_epochs=1
             )
         # end if writer
             
-        if checkpoint_path is not None:
+        if checkpoint_dir is not None:
+            if not os.path.exists(checkpoint_dir):
+                os.makedirs(checkpoint_dir)
+            
             # Save model
-            torch.save(model.state_dict(), checkpoint_path)
-            print(f"Saved PyTorch Model State to {checkpoint_path}")
-        # end if checkpont
+            model_path = os.path.join(checkpoint_dir, f"{model_name}.pth")
+            torch.save(model.state_dict(), model_path)
+            
+            # Save training history
+            history_path = os.path.join(checkpoint_dir, f"{model_name}_hist.json")
+            
+            json_object = json.dumps(history) # serializing json
+            with open(history_path, "w") as outfile:
+                outfile.write(json_object) # write to json file
+                
+            print(f"Saved PyTorch Model State to {model_path} and history to {history_path}")
+            
+        # end if checkpoint
             
     # end for
 
