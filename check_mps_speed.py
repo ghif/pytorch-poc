@@ -78,14 +78,13 @@ num_classes = len(torch.unique(train_data.train_labels))
 dataiter = iter(train_dataloader)
 images, labels = next(dataiter)
 
-for device in ["cpu", "mps"]:
-    # Initialize model
-    model = M.MLP(c, dx1, dx2, 512, num_classes)
-    # model = M.ConvNet(c, dx1, dx2, num_classes=num_classes)
-    print(model)
+# Initialize model
+# model = M.MLP(c, dx1, dx2, 512, num_classes)
+model = M.ConvNet(c, dx1, dx2, num_classes=num_classes)
+print(model)
+
+for device in ["cpu", "mps"]:    
     print(f"\n Measuring performance on \"{device}\" device")
-
-
     print(f"Check training time ...")
     loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
