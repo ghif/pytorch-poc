@@ -145,3 +145,5 @@ def fit(model,
     if writer is not None:        
         writer.flush()
         writer.close() 
+
+    return history

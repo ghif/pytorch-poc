@@ -1,6 +1,6 @@
 import os
 from time import process_time
-import timeit
+import numpy as np
 
 from timeit import default_timer as timer
 
@@ -80,8 +80,8 @@ images, labels = next(dataiter)
 
 for device in ["cpu", "mps"]:
     # Initialize model
-    # model = M.MLP(c, dx1, dx2, 512, num_classes)
-    model = M.ConvNet(c, dx1, dx2, num_classes=num_classes)
+    model = M.MLP(c, dx1, dx2, 512, num_classes)
+    # model = M.ConvNet(c, dx1, dx2, num_classes=num_classes)
     print(model)
     print(f"\n Measuring performance on \"{device}\" device")
 
@@ -96,7 +96,7 @@ for device in ["cpu", "mps"]:
 
     checkpoint_path = os.path.join(checkpoint_dir, f"{MODEL_SUFFIX}.pth")
 
-    T.fit(
+    history = T.fit(
         model, 
         train_dataloader, 
         test_dataloader, 
@@ -109,7 +109,8 @@ for device in ["cpu", "mps"]:
         device=device
     )
     
-    print("Done!")
+    elapsed_time_train = np.sum(history["train_times"])
+    print(f"Training elapsed time ({device}): {elapsed_time_train:.4f} s")
 
     start_t = process_time()
     with torch.no_grad():
@@ -119,4 +120,4 @@ for device in ["cpu", "mps"]:
             y_pred = model(X)
 
     elapsed_time_pred = process_time() - start_t
-    print(f"Inference elapsed time ({device}): {elapsed_time_pred} s")
+    print(f"Inference elapsed time ({device}): {elapsed_time_pred:.4f} s")
