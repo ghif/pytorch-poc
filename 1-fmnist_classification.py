@@ -18,7 +18,7 @@ from torch.utils.tensorboard import SummaryWriter
 # Constants
 DATADIR = "/Users/mghifary/Work/Code/AI/data"
 MODEL_DIR = "models"
-MODEL_SUFFIX = "convnet-randaug-exp2"
+# MODEL_SUFFIX = "convnet-randaug-exp2"
 MODEL_SUFFIX = "tinyresnetv2-randaug-exp1"
 BATCH_SIZE = 128
 EPOCHS = 50
@@ -79,7 +79,8 @@ images, labels = next(dataiter)
 
 # Initialize model
 # model = M.MLP(c, dx1, dx2, 512, num_classes)
-model = M.ConvNet(c, dx1, dx2, num_classes=num_classes)
+# model = M.ConvNet(c, dx1, dx2, num_classes=num_classes)
+model = M.TinyResnetV2(c, M.ResidualBlock, num_classes=num_classes)
 print(model)
 
 device = "mps"

@@ -361,3 +361,23 @@ class ResNet(nn.Module):
         logits = self.fc(x)
 
         return logits
+    
+def check_model_size(model: nn.Module):
+    """
+    This method is used to check the size of a model.
+
+    Args:
+        model (nn.Module): The model to check.
+
+    Returns: 
+        size_all_mb (float): The size of the model in MB.
+    """
+    param_size = 0
+    for param in model.parameters():
+        param_size += param.nelement() * param.element_size()
+    buffer_size = 0
+    for buffer in model.buffers():
+        buffer_size += buffer.nelement() * buffer.element_size()
+
+    size_all_mb = (param_size + buffer_size) / 1024**2
+    return size_all_mb
