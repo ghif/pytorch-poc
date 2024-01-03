@@ -17,38 +17,44 @@ from torch.utils.tensorboard import SummaryWriter
 
 # Constants
 DATADIR = "/Users/mghifary/Work/Code/AI/data"
+DATASET = "cifar10"
 MODEL_DIR = "models"
 # MODEL_SUFFIX = "convnet-randaug-exp2"
 # MODEL_SUFFIX = "tinyresnetv2-randaug-exp1"
-MODEL_SUFFIX = "resnet18-randaug-exp1"
+# MODEL_SUFFIX = "plainnet18-randaug-exp2"
+# MODEL_SUFFIX = "convnet-randaug-exp1"
+MODEL_SUFFIX = "resnet18-randaug-exp2"
 BATCH_SIZE = 128
-EPOCHS = 50
+EPOCHS = 100
 
 # set tensorboard "log_dir" to "logs"
-writer = SummaryWriter(f"logs/fashion-mnist_{MODEL_SUFFIX}")
+writer = SummaryWriter(f"logs/{DATASET}_{MODEL_SUFFIX}")
 
 train_transform = transforms.Compose(
     [
-        transforms.ToTensor(),
         v2.RandAugment(),
+        transforms.ToTensor(),
+        # v2.RandAugment(),
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     ]
 )
 
 inference_transform = transforms.Compose(
     [
         transforms.ToTensor(),
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     ]
 )
 
 # Download training data from open datasets.
-train_data = datasets.FashionMNIST(
+train_data = datasets.CIFAR10(
     root=DATADIR,
     train=True,
     download=True,
     transform=train_transform,
 )
 
-test_data = datasets.FashionMNIST(
+test_data = datasets.CIFAR10(
     root=DATADIR,
     train=False,
     download=True,
@@ -73,7 +79,7 @@ for X, y in train_dataloader:
     print(f"Shape of y: {y.shape}, {y.dtype}")
     break
 
-num_classes = len(torch.unique(train_data.train_labels))
+num_classes = len(train_data.classes)
 
 dataiter = iter(train_dataloader)
 images, labels = next(dataiter)
@@ -83,7 +89,9 @@ images, labels = next(dataiter)
 # model = M.ConvNet(c, dx1, dx2, num_classes=num_classes)
 # model = M.TinyResnetV2(c, M.ResidualBlock, num_classes=num_classes)
 # model = M.TinyResnet(c, M.ResidualBlock, num_classes=num_classes)
+# model = M.PlainNet(c, 18, M.PlainBlock, num_classes=num_classes)
 model = M.ResNet(c, 18, M.ResidualBlock, num_classes=num_classes)
+
 print(model)
 
 device = "mps"
@@ -93,12 +101,11 @@ print(f"\n Measuring performance on \"{device}\" device")
 print(f"Check training time ...")
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
-checkpoint_dir = os.path.join(MODEL_DIR, "fashion-mnist")
+checkpoint_dir = os.path.join(MODEL_DIR, DATASET)
 
 if not os.path.exists(checkpoint_dir):
     os.makedirs(checkpoint_dir)
 
-checkpoint_path = os.path.join(checkpoint_dir, f"{MODEL_SUFFIX}.pth")
 
 history = T.fit(
     model, 
