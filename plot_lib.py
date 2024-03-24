@@ -1,6 +1,10 @@
 from matplotlib import pyplot as plt
 import numpy as np
+
 import torch
+import torchvision.transforms as transforms
+from torchvision.utils import make_grid
+
 from IPython.display import HTML, display
 
 
@@ -147,3 +151,51 @@ def plot_results(train_res, test_res, xlabel='Epoch',legend=['train','test'], ti
     plt.xlabel(xlabel)
     plt.legend(legend)
     plt.title(title)
+
+def plot_bar(res_dict, title='Accuracy', ylabel='Accuracy', xlabel='Corruption', color='b'):
+    xx = list(res_dict.keys())
+    yy = list(res_dict.values())
+
+    plt.bar(xx, yy, color=color)
+    plt.title(title)
+    plt.ylabel(ylabel)
+    plt.xlabel(xlabel)
+    plt.show()
+
+def plot_horizontal_bar(
+        res_dict, 
+        title="CIFAR-10-c", 
+        xlabel='Accuracy', 
+        clean_color="blue", 
+        corrupted_color="green", 
+        saved_filepath=None
+    ):
+    # Get data
+    data_types = list(res_dict.keys())
+    values = list(res_dict.values())
+
+    colors = [clean_color if dtype in ["train", "original"] else corrupted_color for dtype in data_types] 
+
+    fig, ax = plt.subplots()
+    
+
+    # Example data
+    y_pos = np.arange(len(data_types))
+
+    bars = ax.barh(y_pos, values, align='center', color=colors)
+    ax.bar_label(bars, fmt='{:.2f}') # display values on bars
+    ax.set_yticks(y_pos, labels=data_types)
+    ax.invert_yaxis()  # labels read top-to-bottom
+    ax.set_xlabel(xlabel)
+    ax.set_title(title)
+    ax.set_xlim([0, 1])
+
+    if saved_filepath:
+        plt.savefig(saved_filepath, dpi=300, format='png', bbox_inches='tight')
+    else:
+        plt.show()
+
+def show_images(x, nrow=8, padding=5):
+    grid = make_grid(x, nrow=nrow, padding=padding)
+    img = transforms.ToPILImage()(grid)
+    img.show()

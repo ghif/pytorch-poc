@@ -23,7 +23,9 @@ MODEL_DIR = "models"
 # MODEL_SUFFIX = "tinyresnetv2-randaug-exp1"
 # MODEL_SUFFIX = "plainnet18-randaug-exp2"
 # MODEL_SUFFIX = "convnet-randaug-exp1"
-MODEL_SUFFIX = "resnet18-randaug-exp2"
+# MODEL_SUFFIX = "resnet18-randaug-exp2"
+# MODEL_SUFFIX = "resnet18-gelu-randaug-exp1"
+MODEL_SUFFIX = "convnet-gelu-randaug-exp1"
 BATCH_SIZE = 128
 EPOCHS = 100
 
@@ -85,11 +87,23 @@ images, labels = next(dataiter)
 
 # Initialize model
 # model = M.MLP(c, dx1, dx2, 512, num_classes)
-# model = M.ConvNet(c, dx1, dx2, num_classes=num_classes)
+model = M.ConvNet(
+    c, 
+    dx1, 
+    dx2, 
+    num_classes=num_classes,
+    with_gelu=True
+)
 # model = M.TinyResnetV2(c, M.ResidualBlock, num_classes=num_classes)
 # model = M.TinyResnet(c, M.ResidualBlock, num_classes=num_classes)
 # model = M.PlainNet(c, 18, M.PlainBlock, num_classes=num_classes)
-model = M.ResNet(c, 18, M.ResidualBlock, num_classes=num_classes)
+# model = M.ResNet(
+#     c, 
+#     18, 
+#     M.ResidualBlock, 
+#     num_classes=num_classes,
+#     with_gelu=True
+# )
 
 print(model)
 
